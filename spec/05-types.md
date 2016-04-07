@@ -394,6 +394,67 @@ function f(array<?Button> $buttons): void { … }
 function getProcesses(): array<?(function (string): int)> { … }
 ```
 
+###Dict Type
+
+**Syntax**
+<pre>
+<i>dict-type-specifier:</i>
+  dict &lt; <i>array-key-type-specifier</i> , <i>array-value-type-specifier</i> &gt;
+</pre>
+
+**Defined elsewhere**
+
+* [*array-key-type-specifier*](05-types.md#general).
+* [*array-value-type-specifer*](05-types.md#general).
+
+**Constraints**
+
+This is not currently a syntax constraint, but ... Although
+*array-key-type-specifier* can really be any type,
+behind the scenes, the key is actually represented as an `int` or `string`. Unlike the *array type*,
+invalid key types are not converted, instead a runtime exception is thrown.
+
+**Semantics**
+
+A *dict* is a data structure that contains a collection of zero or more elements each of which is accessed through a corresponding key. As the number of elements in a dict can change at runtime, the *type-specifier* for a dict does not include an element count.
+
+Each key in a dict must have a type that is the exact type indicated by *array-key-type-specifier*, or a [subtype](05-types.md#supertypes-and-subtypes) of that type. Each element in a dict must have a type that is the exact type indicated by *array-value-type-specifier*, or a [subtype](05-types.md#supertypes-and-subtypes) of that type. For example,
+`dict<arraykey, num>` can contain a mixture of `int` keys `string` keys, and `int` elements and `float` elements.
+
+A dict element can have any type (which allows for dicts of dicts).
+
+A dict is represented as an ordered map in which each entry is a key/value
+pair that represents an element. Duplicate keys are not permitted. The order
+of the elements in the map is the order in which the elements were inserted
+into the array. An element is said to *exist* once it has been inserted into
+the dict with a corresponding key. A dict is *extended* by initializing a
+previously non-existent element using a new key.
+
+Elements can be *removed* from a dict via the intrinsic [`unset`](10-expressions.md#unset).
+
+The [`foreach` statement](11-statements.md#the-foreach-statement) can be used to iterate over the collection
+of elements in a dict, in the order in which the elements were inserted.
+This statement provides a way to access the key and value for each element.
+
+Each dict has its own current element pointer that designates the current
+dict element. When a dict is created, the current element is the first
+element inserted into the dict.
+
+A dict is created and initialized via the [dict-creation operator `dict[]`](10-expressions.md#array-creation-operator).
+
+The value (and possibly the type) of an existing element is obtained or
+changed, and new elements are inserted, using the [subscript operator `[]`](10-expressions.md#subscript-operator).
+
+The library function `is_dict` indicates if a given value is a dict.
+
+The library function `dict` accepts a *KeyedTraversable* and returns a dict containing the same key to element mapping. When iterated, the dict will return elements in the same order as they appeared in the *KeyedTraversable*. Numerous other library functions are available to create and/or manipulate dicts.
+
+**Examples**
+```Hack
+private dict<int, string> $colorsMap;
+private dict<int, mixed> $items = dict[0 => true, 1 => 123, 2 => ‘red’, 3 => null);
+```
+
 ###Class Types
 
 Class types are described in [§§](16-classes.md#classes).
