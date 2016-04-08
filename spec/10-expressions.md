@@ -960,6 +960,72 @@ foreach($v as $e) { … } // iterates over keys 2, 0, 1, -1
 for ($i = -1; $i <= 2; ++$i) { … $v[$i] } // retrieves via keys -1, 0, 1, 2
 ```
 
+###Dict Creation Operator
+
+A dict is created and initialized via
+the dict-creation operator `dict[]`, as described below.
+
+**Syntax**
+
+<pre>
+  <i>dict-creation-expression:</i>
+    [ <i>dict-initializer<sub>opt</sub></i> ]
+
+  <i>dict-initializer:</i>
+    <i>dict-initializer-list</i>  ,<sub>opt</sub>
+
+  <i>dict-initializer-list:</i>
+    <i>dict-element-initializer</i>
+    <i>dict-element-initializer  ,  dict-initializer-list</i>
+
+  <i>dict-element-initializer:</i>
+    element-key  =>  <i>element-value</i>
+
+  <i>element-key:</i>
+    <i>expression</i>
+
+  <i>element-value</i>
+    <i>expression</i>
+</pre>
+
+**Defined elsewhere**
+
+* [*expression*](10-expressions.md#yield-operator)
+
+**Semantics**
+
+This operator creates a dict. For convenience, an
+*dict-initializer* may have a trailing comma; however, this comma has no
+purpose. If
+*dict-initializer* is omitted, the dict has zero elements. For convenience,
+an *dict-initializer* may have a trailing comma; however, this comma has no
+purpose. An *dict-initializer-list* consists of a comma-separated list of
+one or more *dict-element-initializer*s, each of which is used to provide an
+*element-value* and an *element-key*.
+
+The value of *element-key* is required to be either `int` or `string`. If a value of another type is used, a runtime exception is thrown. This differs from arrays which will silently convert invalid *element-key* values to a valid type. Also `string` keys are always stored as their string value, and never converted to an `int`.
+
+The result of this operator is a handle to the set of dict elements.
+
+**Examples**
+
+```Hack
+$v = dict[];      // dict has 0 elements
+$v = dict[0 => 123, 1 => -56]; // dict of two ints, with keys 0 and 1
+$i = 10;
+$v = dict[$i - 10 => 123, $i - 9 => -56]; // key can be a runtime expression
+$i = 6; $j = 12;
+$v = dict[7 => 123, 3 => $i, 6 => ++$j];  // keys are in arbitrary order
+$v[4] = 99;   // extends dict with a new element
+$v = dict[2 => 23, 1 => 10, 2 => 46, 1.9 => 6];
+     // dict construction will fail because 1.9 is a float and used as a key
+$v = dict["red" => 10, "4" => 3, 9 => 5, "12.8" => 111];
+     // dict has 4 elements, with keys "red", "4", 9, and "12.8".
+$v = dict[2 => true, 0 => 123, 1 => 34.5, -1 => "red"];
+foreach($v as $e) { … } // iterates over keys 2, 0, 1, -1
+for ($i = -1; $i <= 2; ++$i) { … $v[$i] } // retrieves via keys -1, 0, 1, 2
+```
+
 ###Subscript Operator
 
 **Syntax**
@@ -990,7 +1056,9 @@ being designated must exist.
 When *postfix-expression* designates a vector-like array, *expression* must
 have type `int`.
 
-When *postfix-expression* designates a map-like array, elements cannot be appended using empty `[]`.
+When *postfix-expression* designates a map-like array or a dict, elements cannot be appended using empty `[]`.
+
+When *postfix-expression* designates a dict, *expression* must be a subtype of `arraykey`.
 
 When *postfix-expression* designates a tuple, *expression* must be a constant.
 
@@ -1015,7 +1083,7 @@ has type `Pair`.
 **Semantics**
 
 A *subscript-expression* designates a (possibly non-existent) element of
-an array, a string, a vector, a map, or a Pair. When *subscript-expression* designates an object of
+an array, a dict, a string, a vector, a map, or a Pair. When *subscript-expression* designates an object of
 a type that implements [`ArrayAccess`](17-interfaces.md#interface-arrayaccess), the minimal semantics are
 defined below; however, they can be augmented by that object's methods
 [`offsetGet`](17-interfaces.md#interface-arrayaccess) and [`offsetSet`](17-interfaces.md#interface-arrayaccess).
@@ -1036,6 +1104,24 @@ A *subscript-expression* designates a modifiable lvalue if and only if
 If *expression* is present, if the designated element exists, the type
 and value of the result is the type and value of that element;
 otherwise, the result is `null`.
+
+If *expression* is omitted, a new element is inserted. Its key has type
+`int` and is one more than the highest, previously assigned, non-negative
+`int` key for this array. If this is the first element with a non-negative
+`int` key, key zero is used. However, if the highest, previously assigned
+`int` key for this array is [`PHP_INT_MAX`](06-constants.md#core-predefined-constants), **no new element is
+inserted**. The type and value of the result is the type and value of
+the new element.
+
+* If the usage context is as the left-hand side of a [*simple-assignment-expression*](10-expressions.md#simple-assignment): The value of the new element is the value of the right-hand side of that *simple-assignment-expression*.
+* If the usage context is as the left-hand side of a [*compound-assignment-expression*](10-expressions.md#compound-assignment): The expression `e1 op= e2` is evaluated as `e1 = null op (e2)`.
+* If the usage context is as the operand of a [postfix-](10-expressions.md#postfix-increment-and-decrement-operators) or [prefix-increment or decrement operator](10-expressions.md#prefix-increment-and-decrement-operators): The value of the new element is `null`.
+
+*postfix-expression designates a dict*
+
+If *expression* is present, if the designated element
+exists, the type and value of the result is the type and value of that
+element; otherwise, an exception of type `\OutOfBoundsException` is thrown.
 
 If *expression* is omitted, a new element is inserted. Its key has type
 `int` and is one more than the highest, previously assigned, non-negative
